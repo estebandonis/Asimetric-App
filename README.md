@@ -12,7 +12,8 @@ Desarrollar una aplicación donde los usuarios puedan:
 * Acceder a archivos cifrados usando su llave privada.
 
 ## Diagrama Del proyecto
-![alt text](<Diagrama sin título.drawio.png>)
+![alt text](<Diagramalab4.png>)
+
 
 ## Frontend(Vie.js) 🧠
 Funcionalidades:
