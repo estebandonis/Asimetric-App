@@ -1,6 +1,6 @@
   <script setup>
     import { ref } from 'vue';
-    // import api from '../axios/index';
+    import api from '../axios/index';
     // import { useRouter } from 'vue-router';
 
     // const router = useRouter();
@@ -15,7 +15,7 @@
         console.log('Login data:', input.value);
 
         // Make API call to your backend
-        const response = await api.post('/auth/login', input.value);
+        const response = await api.post('/api/user/login', input.value);
 
         console.log('Login response:', response.data);
         
