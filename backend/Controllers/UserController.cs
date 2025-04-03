@@ -27,8 +27,6 @@ public class UserController : Controller
     {
         try
         {
-            Console.WriteLine("Sign in User Email: ");
-            
             user.password = SHAImplementation.Hash(user.password);
             
             var loggedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == user.email && u.password == user.password);
@@ -50,10 +48,6 @@ public class UserController : Controller
     {
         try
         {
-            Console.WriteLine("User Email: " + user.email);
-            Console.WriteLine("User Password: " + user.password);
-            Console.WriteLine("User key: " + user.public_key);
-        
             user.password = SHAImplementation.Hash(user.password);
         
             _dbContext.Users.Add(user);
