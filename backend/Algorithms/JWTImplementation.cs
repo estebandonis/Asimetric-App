@@ -20,7 +20,7 @@ namespace backend.Algorithms
 
         public string generarJWT(User modelo)
         {
-            //Creamos la informacion para el token
+            //Creamos la informacion del usuario para el token
             var userClaims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, modelo.id.ToString()), // para poder identificar al usuario por su id
