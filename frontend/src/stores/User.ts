@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-export const useUser = defineStore("privateKy", {
+export const useUser = defineStore("user", {
     state: () => ({
         email: null as string | null,
     }),
@@ -12,4 +12,5 @@ export const useUser = defineStore("privateKy", {
             this.email = null;
         },
     },
+    persist: true,
 })

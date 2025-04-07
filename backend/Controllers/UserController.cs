@@ -35,8 +35,8 @@ public class UserController : Controller
 
             if (loggedUser == null)
                 return StatusCode(StatusCodes.Status401Unauthorized, new { isSuccess = false, message = "Invalid credentials" });
-            else
-                return StatusCode(StatusCodes.Status200OK, new { isSuccess = true, user = loggedUser.email, token = _jwtImplementation.generarJWT(loggedUser) });
+            
+            return StatusCode(StatusCodes.Status200OK, new { isSuccess = true, user = loggedUser.email, token = _jwtImplementation.generarJWT(loggedUser) });
         }
         catch (Exception e)
         {
