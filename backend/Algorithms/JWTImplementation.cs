@@ -23,7 +23,8 @@ namespace backend.Algorithms
             //Creamos la informacion para el token
             var userClaims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, modelo.email.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, modelo.id.ToString()), // para poder identificar al usuario por su id
+                new Claim(ClaimTypes.Email, modelo.email!), 
 
             };
 
