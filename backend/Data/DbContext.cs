@@ -9,5 +9,6 @@ namespace backend.Models
         }
         
         public DbSet<User> Users { get; set; }
+        public DbSet<File> Files { get; set; }
     }
 }

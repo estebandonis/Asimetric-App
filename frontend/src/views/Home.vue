@@ -1,16 +1,63 @@
 <script setup>
   import { ref } from 'vue';
   import { useUser } from '../stores';
+  import api from '../axios/index';
 
   const user = useUser()
 
   console.log("User Store", user.email)
 
-  // Datos simulados de archivos
-  const files = ref([
-    { id: 1, name: 'documento.pdf' },
-    { id: 2, name: 'informe.docx' },
-  ]);
+  const input = ref({
+    fileName: '',
+    file: null
+  });
+
+  function handleFileUpload(event) {
+    // Get the first file from the event
+    input.value.file = event.target.files[0];
+    // Set the fileName property to the name of the file
+    if (input.value.file) {
+      input.value.fileName = input.value.file.name;
+    }
+    console.log("File selected:", input.value.file);
+  }
+
+  // Function to save the file
+  async function saveFile() {
+    if (!input.value.file) {
+      alert("Please select a file first");
+      return;
+    }
+
+    const fileBase64 = await readFileAsBase64(input.value.file);
+
+    const response = await api.post('/api/file', {
+      fileName: input.value.fileName,
+      fileContent: fileBase64,
+      userEmail: user.email
+    });
+    
+    console.log('File saved:', response.data);
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        // Get the Base64 string (remove the data URL prefix)
+        const base64String = reader.result.toString().split(',')[1];
+        resolve(base64String);
+      };
+      
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  }
+
 </script>
 
 <template>
@@ -31,9 +78,10 @@
 
       <div class="mt-6">
         <h3 class="text-lg font-semibold">Subir Archivo</h3>
-        <input type="file" class="mt-2 p-2 border rounded-lg w-full" />
+        <input v-model="input.fileName" type="text" placeholder="Nombre del Archivo" class="mt-2 p-2 border rounded-lg w-full" />
+        <input @change="handleFileUpload" type="file" class="mt-2 p-2 border rounded-lg w-full" />
         <div class="mt-4 flex gap-4">
-          <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Guardar</button>
+          <button @click="saveFile" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Guardar</button>
           <button class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">Firmar y Guardar</button>
         </div>
       </div>
