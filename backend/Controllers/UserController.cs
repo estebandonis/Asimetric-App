@@ -16,10 +16,12 @@ public class LoginRequest
 public class UserController : Controller
 {
     private readonly AppDbContext _dbContext;
+    private readonly JWTImplementation _jwtImplementation;
 
-    public UserController(AppDbContext dbContext)
+    public UserController(AppDbContext dbContext, JWTImplementation jwtImplementation)
     {
         _dbContext = dbContext;
+        _jwtImplementation = jwtImplementation;
     }
 
     [HttpPost("login")]
@@ -30,11 +32,11 @@ public class UserController : Controller
             user.password = SHAImplementation.Hash(user.password);
             
             var loggedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == user.email && u.password == user.password);
-            
+
             if (loggedUser == null)
                 return StatusCode(StatusCodes.Status401Unauthorized, new { isSuccess = false, message = "Invalid credentials" });
-            
-            return StatusCode(StatusCodes.Status200OK, new { isSuccess = true, user = loggedUser.email });
+            else
+                return StatusCode(StatusCodes.Status200OK, new { isSuccess = true, user = loggedUser.email, token = _jwtImplementation.generarJWT(loggedUser) });
         }
         catch (Exception e)
         {
