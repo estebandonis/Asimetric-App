@@ -63,7 +63,8 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <nav class="p-4 bg-blue-500 text-white flex justify-between">
-      <h1 class="text-xl font-bold">Dashboard</h1>
+      <h1 class="text-xl font-bold">Bienvenido {{ user.name || user.email }}</h1>
+
       <button class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600">Cerrar Sesión</button>
     </nav>
 
