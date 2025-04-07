@@ -7,8 +7,10 @@ namespace backend.Models
     public class User
     {
         [Key]
+        public int id { get; set; }
         public string email { get; set; }
         public string password { get; set; }
         public string public_key { get; set; }
+        public string encrypt_key { get; set; }
     }
 }

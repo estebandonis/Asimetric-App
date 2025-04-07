@@ -1,9 +1,13 @@
   <script setup>
     import { ref } from 'vue';
     import api from '../axios/index';
-    // import { useRouter } from 'vue-router';
+    import { useUser } from '../stores';
+    import { useRouter } from 'vue-router';
+    import { restoreKeysFromStorage } from '../utils';
 
-    // const router = useRouter();
+    const router = useRouter();
+    const user = useUser()
+    
     const input = ref({
       email: '',
       password: ''
@@ -13,17 +17,21 @@
       try {
         console.log("Button pressed")
         console.log('Login data:', input.value);
-
+        
         // Make API call to your backend
         const response = await api.post('/api/user/login', input.value);
-
+        
         console.log('Login response:', response.data);
         
         // Store the token
         // localStorage.setItem('token', response.data.token);
         
+        await restoreKeysFromStorage();
+
+        user.setEmail(input.value.email)
+        
         // Redirect to home page after successful login
-        // router.push('/home');
+        router.push('/home');
       } catch (error) {
         console.error('Login failed:', error);
         // Handle error (show message, etc.)
