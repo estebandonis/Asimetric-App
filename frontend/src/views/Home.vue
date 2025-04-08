@@ -78,6 +78,8 @@
     });
   }
 
+  // verificar los jwt 
+
   // funcion para cerrar sesion
   function handleLogout() {
   localStorage.removeItem("token");
