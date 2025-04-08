@@ -1,7 +1,8 @@
 <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { useUser } from '../stores';
   import api from '../axios/index';
+
 
   const user = useUser()
 
@@ -29,6 +30,7 @@
       return;
     }
 
+
     const fileBase64 = await readFileAsBase64(input.value.file);
 
     const response = await api.post('/api/file', {
@@ -38,6 +40,24 @@
     });
     
     console.log('File saved:', response.data);
+  }
+  // funcion para obtener los archivos y mostrarlos en la lista
+  const files = ref([]);
+
+  onMounted(() => {
+    fetchFiles();
+  });
+
+  async function fetchFiles() {
+    try {
+      const response = await api.get('/api/file');
+      if (response.data.isSuccess) {
+        files.value = response.data.files;
+        console.log("Archivos recibidos:", files.value);
+      }
+    } catch (error) {
+      console.error("Error al obtener los archivos:", error);
+    }
   }
 
   function readFileAsBase64(file) {
@@ -58,6 +78,70 @@
     });
   }
 
+  // mostrar el formulario de validacion de firma
+  const showValidationForm = ref(false);
+  function toggleValidationForm() {
+  showValidationForm.value = !showValidationForm.value;
+}
+
+  const publicKeyFile = ref(null);
+  const hashFile = ref(null);
+  const originalFile = ref(null);
+
+  // Function to handle file uploads for public key, hash, and original file
+  function handlePublicKeyUpload(e) {
+    publicKeyFile.value = e.target.files[0];
+  }
+
+  function handleHashUpload(e) {
+    hashFile.value = e.target.files[0];
+  }
+
+  function handleOriginalFileUpload(e) {
+    originalFile.value = e.target.files[0];
+  }
+/*
+  async function verifySignature() {
+    if (!publicKeyFile.value || !hashFile.value || !originalFile.value) {
+      alert("Por favor sube todos los archivos");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('publicKey', publicKeyFile.value);
+    formData.append('hash', hashFile.value);
+    formData.append('originalFile', originalFile.value);
+
+    try {
+      const response = await api.post('/api/file/verify-signature', formData);
+      alert(response.data.message || "Verificación completada");
+    } catch (error) {
+      console.error("Error verificando firma:", error);
+      alert("Error verificando firma");
+    }
+  }*/
+
+  async function downloadFile(fileId) {
+  try {
+    const response = await api.get(`/api/file/download/${fileId}`, {
+      responseType: 'blob'
+    });
+
+    const blob = new Blob([response.data], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `archivo_${fileId}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error al descargar:", error);
+  }
+}
+
+
 </script>
 
 <template>
@@ -65,7 +149,7 @@
     <nav class="p-4 bg-blue-500 text-white flex justify-between">
       <h1 class="text-xl font-bold">Bienvenido {{ user.name || user.email }}</h1>
 
-      <button class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600">Cerrar Sesión</button>
+      <button @click="logout" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600">Cerrar Sesión</button>
     </nav>
 
     <div class="container mx-auto p-6">
@@ -75,6 +159,19 @@
         <button class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
           Generar Llaves Privadas/Públicas
         </button>
+
+        <button @click="toggleValidationForm" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+          Validar Firma
+        </button>
+      </div>
+
+      <!-- Mostrar Inputs Condicionalmente -->
+      <div v-if="showValidationForm" class="mt-4 space-y-4">
+        <input type="file" @change="handlePublicKeyUpload" accept=".pem" class="block w-full p-2 border rounded-lg" placeholder="Llave Pública .pem" />
+        <input type="file" @change="handleHashUpload" accept=".txt" class="block w-full p-2 border rounded-lg" placeholder="Hash .txt" />
+        <input type="file" @change="handleOriginalFileUpload" class="block w-full p-2 border rounded-lg" placeholder="Archivo original" />
+
+        <button @click="verifySignature" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Verificar Firma</button>
       </div>
 
       <div class="mt-6">
@@ -93,8 +190,7 @@
           <li v-for="file in files" :key="file.id" class="flex justify-between py-2 border-b">
             <span>{{ file.name }}</span>
             <div>
-              <button class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">Validar Firma</button>
-              <button class="ml-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Descargar</button>
+              <button @click="downloadFile(file.id)" class="ml-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Descargar</button>
             </div>
           </li>
         </ul>

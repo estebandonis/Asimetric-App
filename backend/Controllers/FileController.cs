@@ -79,4 +79,48 @@ public class FileController : Controller
             throw;
         }
     }
+
+    // se utiliza para descargar el archivo, el hash y la llave pública del usuario
+    [HttpGet("download/{fileId}")]
+    public async Task<IActionResult> DownloadPackage(int fileId)
+    {
+        var file = await _dbContext.Files.FindAsync(fileId);
+        if (file == null)
+            return NotFound();
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.id == file.user_id);
+        if (user == null)
+            return NotFound(new { isSuccess = false, message = "User not found for this file." });
+
+        var zipStream = new MemoryStream();
+        using (var archive = new System.IO.Compression.ZipArchive(zipStream, System.IO.Compression.ZipArchiveMode.Create, true))
+        {
+            // Archivo original
+            var originalEntry = archive.CreateEntry(file.name);
+            using (var entryStream = originalEntry.Open())
+            using (var fileStream = new MemoryStream(file.content))
+            {
+                await fileStream.CopyToAsync(entryStream);
+            }
+
+            // Hash del archivo
+            var hashEntry = archive.CreateEntry("hash.txt");
+            using (var writer = new StreamWriter(hashEntry.Open()))
+            {
+                await writer.WriteAsync(file.hashed_content);
+            }
+
+            // Llave pública real del usuario
+            var publicKeyEntry = archive.CreateEntry("publicKey.pem");
+            using (var writer = new StreamWriter(publicKeyEntry.Open()))
+            {
+                await writer.WriteAsync(user.public_key);
+            }
+        }
+
+        zipStream.Position = 0;
+        return File(zipStream, "application/zip", $"{file.name}_package.zip");
+    }
+
+
 }
