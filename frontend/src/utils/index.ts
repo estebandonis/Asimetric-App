@@ -1,1 +1,1 @@
-export * from "./AsymetricAlgorithms";
+export * from "./Algorithms";

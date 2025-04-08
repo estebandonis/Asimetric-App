@@ -10,6 +10,7 @@ public class FileRequest
 {
     public string fileName { get; set; }
     public string fileContent { get; set; }
+    public string hashedFile { get; set; }
     public string userEmail { get; set; }
 }
 

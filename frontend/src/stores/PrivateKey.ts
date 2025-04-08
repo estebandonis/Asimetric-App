@@ -4,19 +4,23 @@ export const usePrivateKey = defineStore("privateKey", {
     state: () => ({
         signPrivateKey: null as CryptoKey | null,
         encryptPrivateKey: null as CryptoKey | null,
+        asymetricAlgorithm: null as string | null,
     }),
     getters: {
         getSignPrivateKey: (state) => state.signPrivateKey,
         getEncryptPrivateKey: (state) => state.encryptPrivateKey,
     },
     actions: {
-        setPrivateKeys(signKey: CryptoKey, encryptKey: CryptoKey) {
+        setPrivateKeys(signKey: CryptoKey, encryptKey: CryptoKey, asymetricAlgorithm: string) {
             this.signPrivateKey = signKey;
             this.encryptPrivateKey = encryptKey;
+            this.asymetricAlgorithm = asymetricAlgorithm;
         },
         clearPrivateKeys() {
             this.signPrivateKey = null;
             this.encryptPrivateKey = null;
+            this.asymetricAlgorithm = null;
         },
     },
+    persist: true,
 })

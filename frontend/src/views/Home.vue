@@ -1,9 +1,11 @@
 <script setup>
   import { ref } from 'vue';
-  import { useUser } from '../stores';
+  import { useUser, usePrivateKey } from '../stores';
+  import { computeSHA256, signFile } from '../utils';
   import api from '../axios/index';
 
   const user = useUser()
+  const privateKey = usePrivateKey()
 
   console.log("User Store", user.email)
 
@@ -31,9 +33,14 @@
 
     const fileBase64 = await readFileAsBase64(input.value.file);
 
+    const hashedFile = computeSHA256(fileBase64);
+
+    const signedFile = signFile(hashedFile)
+
     const response = await api.post('/api/file', {
       fileName: input.value.fileName,
       fileContent: fileBase64,
+      hashedFile: signedFile,
       userEmail: user.email
     });
     
