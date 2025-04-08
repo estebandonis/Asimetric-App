@@ -78,6 +78,13 @@
     });
   }
 
+  // funcion para cerrar sesion
+  function handleLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userEmail");
+  window.location.href = "/";
+}
+
   // mostrar el formulario de validacion de firma
   const showValidationForm = ref(false);
   function toggleValidationForm() {
@@ -149,7 +156,12 @@
     <nav class="p-4 bg-blue-500 text-white flex justify-between">
       <h1 class="text-xl font-bold">Bienvenido {{ user.name || user.email }}</h1>
 
-      <button @click="logout" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600">Cerrar Sesión</button>
+      <button
+        @click="handleLogout"
+        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+      >
+        Cerrar sesión
+      </button>
     </nav>
 
     <div class="container mx-auto p-6">
