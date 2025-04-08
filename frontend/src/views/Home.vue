@@ -25,10 +25,15 @@
 
   // Function to save the file
   async function saveFile() {
-    if (!input.value.file) {
-      alert("Please select a file first");
-      return;
-    }
+  if (!input.value.file) {
+    alert("Please select a file first");
+    return;
+  }
+
+  if (!user.email) {
+    alert("User not logged in");
+    return;
+  }
 
 
     const fileBase64 = await readFileAsBase64(input.value.file);
@@ -40,6 +45,7 @@
     });
     
     console.log('File saved:', response.data);
+    await fetchFiles(); // Refresh the file list after saving
   }
   // funcion para obtener los archivos y mostrarlos en la lista
   const files = ref([]);

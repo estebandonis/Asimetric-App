@@ -48,30 +48,30 @@ public class FileController : Controller
         try
         {
             Console.WriteLine("Uploading file");
-            
+
             byte[] fileBytes = Convert.FromBase64String(file.fileContent);
-            
-            // var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == file.userEmail);
-            //
-            // if (user == null)
-            //     return StatusCode(StatusCodes.Status404NotFound, new { isSuccess = false, message = "User not found" });
-            //
-            // Console.WriteLine("User email: " + user.email);
-            
+
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == file.userEmail);
+
+            if (user == null)
+                return StatusCode(StatusCodes.Status404NotFound, new { isSuccess = false, message = "User not found" });
+
+            Console.WriteLine("User email: " + user.email);
+
             var hashedContent = SHAImplementation.Hash(file.fileContent);
-            
+
             Console.WriteLine("File content: " + hashedContent);
-            
+
             var fileToSave = new backend.Models.File
             {
-                user_id = 6,
+                user_id = user.id, // Use the actual user ID instead of hardcoded value
                 name = file.fileName,
                 hashed_content = hashedContent,
                 content = fileBytes
             };
-            
+
             Console.WriteLine("File to save: " + fileToSave.name);
-            
+
             _dbContext.Files.Add(fileToSave);
             await _dbContext.SaveChangesAsync();
             return StatusCode(StatusCodes.Status201Created, new { isSuccess = true, message = "File added successfully" });
