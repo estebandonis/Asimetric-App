@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace backend.Controllers;
 
@@ -14,6 +15,7 @@ public class FileRequest
     public string fileContent { get; set; }
     public string userEmail { get; set; }
 }
+
 
 [ApiController]
 //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -42,13 +44,29 @@ public class FileController : Controller
         }
     }
 
+    public byte[] SignFile(byte[] fileContent, string privateKey)
+    {
+        try
+        {
+            using (RSA rsa = RSA.Create())
+            {
+                rsa.ImportFromPem(privateKey.ToCharArray());
+                return rsa.SignData(fileContent, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Firma Error] {ex.Message}");
+            return null;
+        }
+    }
+
+
     [HttpPost]
     public async Task<ActionResult<IEnumerable<User>>> SaveFile([FromBody] FileRequest file)
     {
         try
         {
-            Console.WriteLine("Uploading file");
-
             byte[] fileBytes = Convert.FromBase64String(file.fileContent);
 
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == file.userEmail);
@@ -56,21 +74,19 @@ public class FileController : Controller
             if (user == null)
                 return StatusCode(StatusCodes.Status404NotFound, new { isSuccess = false, message = "User not found" });
 
-            Console.WriteLine("User email: " + user.email);
-
             var hashedContent = SHAImplementation.Hash(file.fileContent);
 
-            Console.WriteLine("File content: " + hashedContent);
+            // Aquí omitimos la firma, asignando null o simplemente un valor vacío
+            byte[] signature = new byte[0];  // Deja la firma vacía en lugar de generar una
 
             var fileToSave = new backend.Models.File
             {
-                user_id = user.id, // Use the actual user ID instead of hardcoded value
+                user_id = user.id,
                 name = file.fileName,
                 hashed_content = hashedContent,
-                content = fileBytes
+                content = fileBytes,
+                signature = signature  // Dejamos la firma vacía
             };
-
-            Console.WriteLine("File to save: " + fileToSave.name);
 
             _dbContext.Files.Add(fileToSave);
             await _dbContext.SaveChangesAsync();
@@ -79,9 +95,10 @@ public class FileController : Controller
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw;
+            return StatusCode(StatusCodes.Status500InternalServerError, new { isSuccess = false, message = "Internal server error" });
         }
     }
+
 
     // se utiliza para descargar el archivo, el hash y la llave pública del usuario
     [HttpGet("download/{fileId}")]

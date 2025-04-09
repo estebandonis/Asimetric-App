@@ -11,5 +11,6 @@ public class File
     public int user_id { get; set; }
     public string name { get; set; }
     public string hashed_content { get; set; }
-    public byte[] content { get; set; }    
+    public byte[] content { get; set; }
+    public byte[] signature { get; set; }  // Firma del archivo
 }
