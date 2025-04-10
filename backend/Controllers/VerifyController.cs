@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using backend.Algorithms;
 using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,8 @@ public class VerifyController : Controller
     {
         try
         {
+            // byte[] fileBytes = AESImplementation.DecryptFile(request.base64FileContent, user.encrypt_key);
+            
             byte[] fileContent = Convert.FromBase64String(request.base64FileContent);
             byte[] signature = Convert.FromBase64String(request.base64Signature);
             string publicKey = request.publicKeyPem;

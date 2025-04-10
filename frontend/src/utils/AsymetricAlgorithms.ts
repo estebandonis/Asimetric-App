@@ -163,16 +163,21 @@ export const encryptFile = async (fileContent) => {
       privateKey.encryptPrivateKey,
       bytes.buffer,
     );
+
+    console.log("Encrypted content:", encrypted);
+    console.log("Encrypted length:", encrypted.byteLength);
+
+    console.log("IV:", iv);
+    console.log("IV:", iv.length);
+
     // Combine IV and ciphertext for transmission
     const combined = new Uint8Array(iv.length + encrypted.byteLength);
     combined.set(iv);
     combined.set(new Uint8Array(encrypted), iv.length);
     // Convert to base64
     const base64Combined = btoa(ab2str(combined.buffer));
-    // Convert to hex
-    const hexArray = Array.from(new Uint8Array(combined));
-    const hexString = hexArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return { base64: base64Combined, hex: hexString };
+
+    return base64Combined;
   } catch (error) {
     console.error("Error encrypting file:", error);
     throw error;

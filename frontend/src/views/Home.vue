@@ -2,6 +2,7 @@
   import { ref, onMounted } from 'vue';
   import { useUser, usePrivateKey } from '../stores';
   import api from '../axios/index';
+import { encryptFile } from '../utils';
 
 
   const user = useUser()
@@ -138,34 +139,19 @@
     try {
       // Leer el archivo de llave pública como texto
       const publicKeyText = await readFileAsText(publicKeyFile.value);
-
-      console.log("Public Key Text:", publicKeyText);
       
       // Asegurarse que la llave tenga el formato correcto
       const formattedPublicKey = formatAsPEM(publicKeyText);
-
-      console.log("Formatted Public Key:", formattedPublicKey);
       
       // Leer la firma como texto base64 puro
       const signatureText = await readFileAsText(signatureFile.value);
 
-      console.log("Signature Text:", signatureText);
-
       const signatureBase64 = signatureText.trim(); // Eliminar espacios extra
-
-      console.log("Signature Base64:", signatureBase64);
       
       // Leer el archivo original como base64
       const fileContentBase64 = await readFileAsBase64(originalFile.value);
 
-      console.log("Verificando firma con:");
-      console.log("Public Key:", formattedPublicKey);
-      console.log("Signature length:", signatureBase64.length);
-      console.log("File content length:", fileContentBase64.length);
-      console.log("File name:", originalFile.value.name);
-      console.log("firma:", signatureBase64);
-
-
+      // const encryptedFile = await encryptFile(fileContentBase64);
 
       const requestData = {
         base64FileContent: fileContentBase64,
@@ -267,6 +253,8 @@ async function signAndSaveFile() {
     // 1. Convertir el archivo a base64 primero
     const originalFileBase64 = await readFileAsBase64(input.value.file);
 
+    const fileContent = await encryptFile(originalFileBase64);
+
     // 2. Read file as ArrayBuffer
     const reader = new FileReader();
     const fileArrayBuffer = await new Promise((resolve, reject) => {
@@ -302,7 +290,7 @@ async function signAndSaveFile() {
     // 4. Crear el objeto para enviar al servidor
     const response = await api.post('/api/file', {
       fileName: signedFileName,
-      fileContent: originalFileBase64,
+      fileContent: fileContent,
       signature: signatureBase64,
       userEmail: user.email,
       isSigned: true

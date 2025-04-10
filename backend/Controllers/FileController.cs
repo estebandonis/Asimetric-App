@@ -70,8 +70,8 @@ public class FileController : Controller
     {
         try
         {
-            byte[] fileBytes = Convert.FromBase64String(file.fileContent);
-
+            // byte[] fileBytes = Convert.FromBase64String(file.fileContent);
+            
             // Verifica que la firma est� presente
             // byte[] signature = string.IsNullOrEmpty(file.signature)
             //     ? new byte[0]  // Firma vac�a si no se env�a firma
@@ -82,6 +82,8 @@ public class FileController : Controller
             if (user == null)
                 return StatusCode(StatusCodes.Status404NotFound, new { isSuccess = false, message = "User not found" });
 
+            byte[] fileBytes = AESImplementation.DecryptFile(file.fileContent, user.encrypt_key);
+            
             var hashedContent = SHAImplementation.Hash(file.fileContent);
 
             var fileToSave = new backend.Models.File
