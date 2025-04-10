@@ -14,6 +14,9 @@ public class FileRequest
     public string fileName { get; set; }
     public string fileContent { get; set; }
     public string userEmail { get; set; }
+    public bool isSigned { get; set; }
+    public string? signature { get; set; }  // Agrega esta línea para la firma
+
 }
 
 
@@ -69,6 +72,11 @@ public class FileController : Controller
         {
             byte[] fileBytes = Convert.FromBase64String(file.fileContent);
 
+            // Verifica que la firma esté presente
+            byte[] signature = string.IsNullOrEmpty(file.signature)
+                ? new byte[0]  // Firma vacía si no se envía firma
+                : Convert.FromBase64String(file.signature);  // Convierte la firma desde Base64
+
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == file.userEmail);
 
             if (user == null)
@@ -76,20 +84,18 @@ public class FileController : Controller
 
             var hashedContent = SHAImplementation.Hash(file.fileContent);
 
-            // Aquí omitimos la firma, asignando null o simplemente un valor vacío
-            byte[] signature = new byte[0];  // Deja la firma vacía en lugar de generar una
-
             var fileToSave = new backend.Models.File
             {
                 user_id = user.id,
                 name = file.fileName,
                 hashed_content = hashedContent,
                 content = fileBytes,
-                signature = signature  // Dejamos la firma vacía
+                signature = signature  // Aquí guardas la firma en la columna signature
             };
 
             _dbContext.Files.Add(fileToSave);
             await _dbContext.SaveChangesAsync();
+
             return StatusCode(StatusCodes.Status201Created, new { isSuccess = true, message = "File added successfully" });
         }
         catch (Exception e)
@@ -98,6 +104,7 @@ public class FileController : Controller
             return StatusCode(StatusCodes.Status500InternalServerError, new { isSuccess = false, message = "Internal server error" });
         }
     }
+
 
 
     // se utiliza para descargar el archivo, el hash y la llave pública del usuario

@@ -164,13 +164,12 @@ export const restoreKeysFromStorage = async () => {
     const storedKeysJson = localStorage.getItem('privateKeys');
     
     if (!storedKeysJson) {
-      console.log("No stored keys found");
-      return null;
+      throw new Error("No stored keys found");
     }
     
     const storedKeys = JSON.parse(storedKeysJson);
-    
-    // Import the signing private key
+
+    // Import the signing private key with RSA-PSS
     const signingPrivateKeyBuffer = str2ab(atob(storedKeys.signing));
     const signingPrivateKey = await window.crypto.subtle.importKey(
       "pkcs8",
@@ -179,10 +178,10 @@ export const restoreKeysFromStorage = async () => {
         name: "RSA-PSS",
         hash: { name: "SHA-256" },
       },
-      true,
+      false, // No extraíble
       ["sign"]
     );
-    
+
     // Import the AES encryption key
     const encryptKeyBuffer = str2ab(atob(storedKeys.encryption));
     const encryptKey = await window.crypto.subtle.importKey(
@@ -195,13 +194,14 @@ export const restoreKeysFromStorage = async () => {
       ["encrypt", "decrypt"]
     );
     
-    // Store the imported keys in the Pinia store
     privateKey.setPrivateKeys(signingPrivateKey, encryptKey, "RSA-PSS");
+    console.log("Keys restored successfully");
+    
   } catch (error) {
-    console.log("Error restoring keys:", error);
-    return null;
+    console.error("Error restoring keys:", error);
+    throw error;
   }
-}
+};
 
 export const encryptFile = async (fileContent) => {
   try {
@@ -281,43 +281,53 @@ export const decryptFile = async (encryptedContent) => {
   }
 }
 
-export const signFile = async (message) => {
+export const signFile = async (message: string) => {
   try {
     const privateKey = usePrivateKey();
     if (!privateKey.signPrivateKey) {
       console.error("Signing private key not found");
       return null;
     }
+
     // Convert message to ArrayBuffer
     const encoder = new TextEncoder();
     const messageData = encoder.encode(message);
-    // Sign the message
-    if (privateKey.asymetricAlgorithm === "RSA-PSS") {
-      return window.crypto.subtle.sign(
-        {
-          name: "RSA-PSS",
-          saltLength: 32,
-        },
-        privateKey.signPrivateKey,
-        messageData,
-        // Convert the signature to base64
-      ).then((signature) => {
-        const signatureArray = new Uint8Array(signature);
-        return btoa(ab2str(signatureArray.buffer));
-      });
-    } else {
-      return window.crypto.subtle.sign(
-        {
-          name: "ECDSA",
-          hash: { name: "SHA-256" },
-        },
-        privateKey.signPrivateKey,
-        messageData,
-      ).then((signature) => {
-        const signatureArray = new Uint8Array(signature);
-        return btoa(ab2str(signatureArray.buffer));
-      });
+
+    // Importar la llave desde localStorage para asegurar el algoritmo correcto
+    const storedKeysJson = localStorage.getItem('privateKeys');
+    if (!storedKeysJson) {
+      throw new Error("No stored keys found");
     }
+
+    const storedKeys = JSON.parse(storedKeysJson);
+    const signingPrivateKeyBuffer = str2ab(atob(storedKeys.signing));
+
+    // Importar la llave con el algoritmo correcto
+    const signKey = await window.crypto.subtle.importKey(
+      "pkcs8",
+      signingPrivateKeyBuffer,
+      {
+        name: "RSA-PSS",
+        hash: { name: "SHA-256" },
+      },
+      false,
+      ["sign"]
+    );
+
+    // Firmar el mensaje
+    const signature = await window.crypto.subtle.sign(
+      {
+        name: "RSA-PSS",
+        saltLength: 32,
+      },
+      signKey,
+      messageData
+    );
+
+    // Convertir la firma a base64
+    const signatureArray = new Uint8Array(signature);
+    return btoa(String.fromCharCode.apply(null, signatureArray));
+
   } catch (error) {
     console.error("Error signing message:", error);
     throw error;

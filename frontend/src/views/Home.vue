@@ -1,12 +1,25 @@
 <script setup>
   import { ref, onMounted } from 'vue';
-  import { useUser } from '../stores';
+  import { useUser, usePrivateKey } from '../stores';
+  import { signFile, restoreKeysFromStorage } from '../utils';
   import api from '../axios/index';
 
 
   const user = useUser()
+  const privateKey = usePrivateKey()
 
   console.log("User Store", user.email)
+  console.log("Aqui",localStorage.privateKeys)
+
+  onMounted(async () => {
+  try {
+    await restoreKeysFromStorage();
+    await fetchFiles();
+  } catch (error) {
+    console.error("Error initializing:", error);
+  }
+});
+  
 
   const input = ref({
     fileName: '',
@@ -41,7 +54,9 @@
     const response = await api.post('/api/file', {
       fileName: input.value.fileName,
       fileContent: fileBase64,
-      userEmail: user.email
+      userEmail: user.email,
+      signature: null, // No signature for non-signed files
+      isSigned: false
     });
     
     console.log('File saved:', response.data);
@@ -135,7 +150,6 @@
       alert("Error verificando firma");
     }
   }*/
-
   async function downloadFile(fileId) {
   try {
     const response = await api.get(`/api/file/download/${fileId}`, {
@@ -153,6 +167,49 @@
     document.body.removeChild(link);
   } catch (error) {
     console.error("Error al descargar:", error);
+  }
+}
+
+async function signAndSaveFile() {
+  if (!input.value.file) {
+    alert("Por favor seleccione un archivo primero");
+    return;
+  }
+
+  try {
+    // 1. Obtener y validar la llave privada
+    const privateKeysStr = localStorage.getItem("privateKeys");
+    if (!privateKeysStr) {
+      throw new Error("No se encontró la llave privada");
+    }
+
+    const keys = JSON.parse(privateKeysStr);
+    if (!keys.signing) { 
+      throw new Error("Formato de llave privada inválido");
+    }
+
+    // 2. Convertir el archivo a base64 primero
+    const originalFileBase64 = await readFileAsBase64(input.value.file);
+
+    // 3. Firmar el archivo usando la llave de firma
+    const signature = await signFile(originalFileBase64, keys.signing); // Cambiado a keys.signing
+
+    // 4. Crear el objeto para enviar al servidor
+    const response = await api.post('/api/file', {
+      fileName: input.value.fileName + '_signed',
+      fileContent: originalFileBase64,
+      signature: signature,
+      userEmail: user.email,
+      isSigned: true
+    });
+
+    console.log('Archivo firmado y guardado:', response.data);
+    alert("Archivo firmado y guardado exitosamente");
+    await fetchFiles();
+
+  } catch (error) {
+    console.error("Error al firmar y guardar el archivo:", error);
+    alert("Error al firmar el archivo: " + error.message);
   }
 }
 
@@ -201,7 +258,12 @@
         <input @change="handleFileUpload" type="file" class="mt-2 p-2 border rounded-lg w-full" />
         <div class="mt-4 flex gap-4">
           <button @click="saveFile" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Guardar</button>
-          <button class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">Firmar y Guardar</button>
+          <button 
+            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded"
+            @click="signAndSaveFile"
+          >
+            Firmar y Guardar
+          </button>
         </div>
       </div>
 
