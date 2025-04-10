@@ -23,11 +23,13 @@ public class VerifyController : Controller
             byte[] fileContent = Convert.FromBase64String(request.base64FileContent);
             byte[] signature = Convert.FromBase64String(request.base64Signature);
             string publicKey = request.publicKeyPem;
+            
+            Console.WriteLine($"Public key: {publicKey}");
 
             using (RSA rsa = RSA.Create())
             {
                 rsa.ImportFromPem(publicKey.ToCharArray());
-                bool isValid = rsa.VerifyData(fileContent, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                bool isValid = rsa.VerifyData(fileContent, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
 
                 return Ok(new
                 {
@@ -37,16 +39,18 @@ public class VerifyController : Controller
                 });
             }
         }
-        catch (FormatException)
+        catch (FormatException fo)
         {
+            Console.WriteLine("Invalid base64 format." + fo.Message);
             return BadRequest(new
             {
                 isSuccess = false,
-                message = "Invalid base64 content or signature format."
+                message = "Invalid base64 content or signature format.: "
             });
         }
         catch (CryptographicException ce)
         {
+            Console.WriteLine("Cryptographic error: " + ce.Message);
             return BadRequest(new
             {
                 isSuccess = false,
@@ -55,6 +59,7 @@ public class VerifyController : Controller
         }
         catch (Exception ex)
         {
+            Console.WriteLine("Internal error: " + ex.Message);
             return StatusCode(500, new
             {
                 isSuccess = false,

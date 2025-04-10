@@ -12,5 +12,6 @@ namespace backend.Models
         public string password { get; set; }
         public string public_key { get; set; }
         public string encrypt_key { get; set; }
+        public string key_type { get; set; }
     }
 }

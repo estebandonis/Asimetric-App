@@ -32,9 +32,6 @@ export const generateRSAKeys = async() => {
     const exportedSigningPublic = await window.crypto.subtle.exportKey("spki", signingPublicKey);
     const exportedSigningPublicBase64 = btoa(ab2str(exportedSigningPublic));
 
-    const exportedSigningPrivate = await window.crypto.subtle.exportKey("pkcs8", signingPrivateKey);
-    const exportedSigningPrivateBase64 = btoa(ab2str(exportedSigningPrivate));
-
     const encrypt = await window.crypto.subtle.generateKey(
       {
         name: "AES-CBC",
@@ -47,19 +44,12 @@ export const generateRSAKeys = async() => {
     const exportedEncrypt = await window.crypto.subtle.exportKey("raw", encrypt);
     const exportedEncryptBase64 = btoa(ab2str(exportedEncrypt));
 
-    // Store private keys
-    const storedKeys = {
-        encryption: exportedEncryptBase64,
-        signing: exportedSigningPrivateBase64,
-    };
-    
-    localStorage.setItem('privateKeys', JSON.stringify(storedKeys));
-    
-    privateKey.setPrivateKeys(signingPrivateKey, encrypt);
+    privateKey.setPrivateKeys(signingPrivateKey, signingPublicKey, encrypt, "RSA-PSS");
 
     return { 
       publicKey: exportedSigningPublicBase64,
       encryptKey: exportedEncryptBase64, 
+      keyType: "RSA-PSS"
     };
   } catch (error) {
     console.log("Error generating RSA keys:", error); 
@@ -83,9 +73,6 @@ export const generateECCKeys = async() => {
     const exportedSigningPublic = await window.crypto.subtle.exportKey("spki", signingPublicKey);
     const exportedSigningPublicBase64 = btoa(ab2str(exportedSigningPublic));
 
-    const exportedSigningPrivate = await window.crypto.subtle.exportKey("pkcs8", signingPrivateKey);
-    const exportedSigningPrivateBase64 = btoa(ab2str(exportedSigningPrivate));
-
     const encrypt = await window.crypto.subtle.generateKey(
         {
           name: "AES-CBC",
@@ -98,18 +85,12 @@ export const generateECCKeys = async() => {
     const exportedEncrypt = await window.crypto.subtle.exportKey("raw", encrypt);
     const exportedEncryptBase64 = btoa(ab2str(exportedEncrypt));
 
-    // Store private keys
-    const storedKeys = {
-      encryption: exportedEncryptBase64,
-      signing: exportedSigningPrivateBase64,
-    };
-
-    localStorage.setItem('privateKeys', JSON.stringify(storedKeys));
-    privateKey.setPrivateKeys(signingPrivateKey, encrypt, "ECDSA");
+    privateKey.setPrivateKeys(signingPrivateKey, signingPublicKey, encrypt, "ECDSA");
 
     return {
       publicKey: exportedSigningPublicBase64, 
-      encryptKey: exportedEncryptBase64 
+      encryptKey: exportedEncryptBase64,
+      keyType: "ECDSA"
     }; 
   } catch (error) {
     console.log("Error generating ECC keys:", error);
@@ -157,51 +138,6 @@ export async function encryptWithAESCBC(message: string) {
     throw error;
   }
 }
-
-export const restoreKeysFromStorage = async () => {
-  try {
-    const privateKey = usePrivateKey();
-    const storedKeysJson = localStorage.getItem('privateKeys');
-    
-    if (!storedKeysJson) {
-      throw new Error("No stored keys found");
-    }
-    
-    const storedKeys = JSON.parse(storedKeysJson);
-
-    // Import the signing private key with RSA-PSS
-    const signingPrivateKeyBuffer = str2ab(atob(storedKeys.signing));
-    const signingPrivateKey = await window.crypto.subtle.importKey(
-      "pkcs8",
-      signingPrivateKeyBuffer,
-      {
-        name: "RSA-PSS",
-        hash: { name: "SHA-256" },
-      },
-      false, // No extraíble
-      ["sign"]
-    );
-
-    // Import the AES encryption key
-    const encryptKeyBuffer = str2ab(atob(storedKeys.encryption));
-    const encryptKey = await window.crypto.subtle.importKey(
-      "raw",
-      encryptKeyBuffer,
-      {
-        name: "AES-CBC",
-      },
-      true,
-      ["encrypt", "decrypt"]
-    );
-    
-    privateKey.setPrivateKeys(signingPrivateKey, encryptKey, "RSA-PSS");
-    console.log("Keys restored successfully");
-    
-  } catch (error) {
-    console.error("Error restoring keys:", error);
-    throw error;
-  }
-};
 
 export const encryptFile = async (fileContent) => {
   try {
@@ -277,59 +213,6 @@ export const decryptFile = async (encryptedContent) => {
     return { base64: decryptedBase64, hex: hexString };
   } catch (error) {
     console.error("Error decrypting file:", error);
-    throw error;
-  }
-}
-
-export const signFile = async (message: string) => {
-  try {
-    const privateKey = usePrivateKey();
-    if (!privateKey.signPrivateKey) {
-      console.error("Signing private key not found");
-      return null;
-    }
-
-    // Convert message to ArrayBuffer
-    const encoder = new TextEncoder();
-    const messageData = encoder.encode(message);
-
-    // Importar la llave desde localStorage para asegurar el algoritmo correcto
-    const storedKeysJson = localStorage.getItem('privateKeys');
-    if (!storedKeysJson) {
-      throw new Error("No stored keys found");
-    }
-
-    const storedKeys = JSON.parse(storedKeysJson);
-    const signingPrivateKeyBuffer = str2ab(atob(storedKeys.signing));
-
-    // Importar la llave con el algoritmo correcto
-    const signKey = await window.crypto.subtle.importKey(
-      "pkcs8",
-      signingPrivateKeyBuffer,
-      {
-        name: "RSA-PSS",
-        hash: { name: "SHA-256" },
-      },
-      false,
-      ["sign"]
-    );
-
-    // Firmar el mensaje
-    const signature = await window.crypto.subtle.sign(
-      {
-        name: "RSA-PSS",
-        saltLength: 32,
-      },
-      signKey,
-      messageData
-    );
-
-    // Convertir la firma a base64
-    const signatureArray = new Uint8Array(signature);
-    return btoa(String.fromCharCode.apply(null, signatureArray));
-
-  } catch (error) {
-    console.error("Error signing message:", error);
     throw error;
   }
 }

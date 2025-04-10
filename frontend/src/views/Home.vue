@@ -1,7 +1,6 @@
 <script setup>
   import { ref, onMounted } from 'vue';
   import { useUser, usePrivateKey } from '../stores';
-  import { signFile, restoreKeysFromStorage } from '../utils';
   import api from '../axios/index';
 
 
@@ -9,12 +8,10 @@
   const privateKey = usePrivateKey()
 
   console.log("User Store", user.email)
-  console.log(localStorage)
-  console.log("Aqui",localStorage.privateKeys)
+  console.log("Private Key Store", privateKey.signPrivateKey)
 
   onMounted(async () => {
   try {
-    await restoreKeysFromStorage();
     await fetchFiles();
   } catch (error) {
     console.error("Error initializing:", error);
@@ -133,55 +130,64 @@
   }
 
   async function verifySignature() {
-  if (!publicKeyFile.value || !signatureFile.value || !originalFile.value) {
-    alert("Por favor sube todos los archivos");
-    return;
-  }
-
-  try {
-    // Leer el archivo de llave pública como texto
-    const publicKeyText = await readFileAsText(publicKeyFile.value);
-    
-    // Asegurarse que la llave tenga el formato correcto
-    const formattedPublicKey = formatAsPEM(publicKeyText);
-    
-    // Leer la firma como texto base64 puro
-    const signatureText = await readFileAsText(signatureFile.value);
-    const signatureBase64 = signatureText.trim(); // Eliminar espacios extra
-    
-    // Leer el archivo original como base64
-    const fileContentBase64 = await readFileAsBase64(originalFile.value);
-
-    console.log("Verificando firma con:");
-    console.log("Public Key:", formattedPublicKey);
-    console.log("Signature length:", signatureBase64.length);
-    console.log("File content length:", fileContentBase64.length);
-    console.log("File name:", originalFile.value.name);
-    console.log("firma:", signatureBase64);
-
-
-
-    const requestData = {
-      base64FileContent: fileContentBase64,
-      base64Signature: signatureBase64,
-      publicKeyPem: formattedPublicKey
-    };
-
-    const response = await api.post('/api/Verify/signature', requestData);
-    
-    if (response.data.isSuccess) {
-      if (response.data.isSignatureValid) {
-        alert("¡Firma válida! El archivo no ha sido modificado.");
-      } else {
-        alert("¡Firma inválida! El archivo puede haber sido modificado.");
-      }
-    } else {
-      throw new Error(response.data.message);
+    if (!publicKeyFile.value || !signatureFile.value || !originalFile.value) {
+      alert("Por favor sube todos los archivos");
+      return;
     }
-  } catch (error) {
-    console.error("Error completo:", error);
-    alert("Error verificando firma: " + (error.response?.data?.message || error.message));
-  }
+
+    try {
+      // Leer el archivo de llave pública como texto
+      const publicKeyText = await readFileAsText(publicKeyFile.value);
+
+      console.log("Public Key Text:", publicKeyText);
+      
+      // Asegurarse que la llave tenga el formato correcto
+      const formattedPublicKey = formatAsPEM(publicKeyText);
+
+      console.log("Formatted Public Key:", formattedPublicKey);
+      
+      // Leer la firma como texto base64 puro
+      const signatureText = await readFileAsText(signatureFile.value);
+
+      console.log("Signature Text:", signatureText);
+
+      const signatureBase64 = signatureText.trim(); // Eliminar espacios extra
+
+      console.log("Signature Base64:", signatureBase64);
+      
+      // Leer el archivo original como base64
+      const fileContentBase64 = await readFileAsBase64(originalFile.value);
+
+      console.log("Verificando firma con:");
+      console.log("Public Key:", formattedPublicKey);
+      console.log("Signature length:", signatureBase64.length);
+      console.log("File content length:", fileContentBase64.length);
+      console.log("File name:", originalFile.value.name);
+      console.log("firma:", signatureBase64);
+
+
+
+      const requestData = {
+        base64FileContent: fileContentBase64,
+        base64Signature: signatureBase64,
+        publicKeyPem: formattedPublicKey
+      };
+
+      const response = await api.post('/api/Verify/signature', requestData);
+      
+      if (response.data.isSuccess) {
+        if (response.data.isSignatureValid) {
+          alert("¡Firma válida! El archivo no ha sido modificado.");
+        } else {
+          alert("¡Firma inválida! El archivo puede haber sido modificado.");
+        }
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error completo:", error);
+      alert("Error verificando firma: " + (error.response?.data?.message || error.message));
+    }
 }
 
 // Función mejorada para formatear PEM
@@ -258,25 +264,33 @@ async function signAndSaveFile() {
   }
 
   try {
-    // 1. Obtener y validar la llave privada
-    const privateKeysStr = localStorage.getItem("privateKeys");
-    if (!privateKeysStr) {
-      throw new Error("No se encontró la llave privada");
-    }
-
-    const keys = JSON.parse(privateKeysStr);
-    if (!keys.signing) { 
-      throw new Error("Formato de llave privada inválido");
-    }
-
-    // 2. Convertir el archivo a base64 primero
+    // 1. Convertir el archivo a base64 primero
     const originalFileBase64 = await readFileAsBase64(input.value.file);
 
-    console.log("Archivo original en base64:", originalFileBase64);
+    // 2. Read file as ArrayBuffer
+    const reader = new FileReader();
+    const fileArrayBuffer = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(input.value.file);
+    });
 
     // 3. Firmar el archivo usando la llave de firma
-    const signature = await signFile(originalFileBase64, keys.signing); // Cambiado a keys.signing
+    const signature = await window.crypto.subtle.sign(
+      {
+        name: "RSA-PSS",
+        saltLength: 32,
+        hash: { name: "SHA-256" },
+      },
+      privateKey.signPrivateKey,
+      fileArrayBuffer,
+    );
+
     console.log("Firma generada:", signature);
+
+    const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+
+    console.log("Firma en Base64:", signatureBase64);
 
     // Extraer el nombre del archivo y la extensión
     const fileName = input.value.fileName;
@@ -285,18 +299,11 @@ async function signAndSaveFile() {
     const extension = fileName.substring(lastDotIndex);
     const signedFileName = `${name}_signed${extension}`;
 
-    // intentar verificar la firma
-    const isSignatureValid = await verifySignature(originalFileBase64, signature, keys.signing);
-    if (!isSignatureValid) {
-      throw new Error("La firma no es válida. No se puede guardar el archivo firmado.");
-    }
-    console.log("Firma verificada correctamente.");
-
     // 4. Crear el objeto para enviar al servidor
     const response = await api.post('/api/file', {
       fileName: signedFileName,
       fileContent: originalFileBase64,
-      signature: signature,
+      signature: signatureBase64,
       userEmail: user.email,
       isSigned: true
     });

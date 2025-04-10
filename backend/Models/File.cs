@@ -12,5 +12,5 @@ public class File
     public string name { get; set; }
     public string hashed_content { get; set; }
     public byte[] content { get; set; }
-    public byte[] signature { get; set; }  // Firma del archivo
+    public string signature { get; set; }  // Firma del archivo
 }

@@ -15,7 +15,7 @@ public class FileRequest
     public string fileContent { get; set; }
     public string userEmail { get; set; }
     public bool isSigned { get; set; }
-    public string? signature { get; set; }  // Agrega esta línea para la firma
+    public string? signature { get; set; }  // Agrega esta lï¿½nea para la firma
 
 }
 
@@ -72,10 +72,10 @@ public class FileController : Controller
         {
             byte[] fileBytes = Convert.FromBase64String(file.fileContent);
 
-            // Verifica que la firma esté presente
-            byte[] signature = string.IsNullOrEmpty(file.signature)
-                ? new byte[0]  // Firma vacía si no se envía firma
-                : Convert.FromBase64String(file.signature);  // Convierte la firma desde Base64
+            // Verifica que la firma estï¿½ presente
+            // byte[] signature = string.IsNullOrEmpty(file.signature)
+            //     ? new byte[0]  // Firma vacï¿½a si no se envï¿½a firma
+            //     : Convert.FromBase64String(file.signature);  // Convierte la firma desde Base64
 
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == file.userEmail);
 
@@ -90,7 +90,7 @@ public class FileController : Controller
                 name = file.fileName,
                 hashed_content = hashedContent,
                 content = fileBytes,
-                signature = signature  // Aquí guardas la firma en la columna signature
+                signature = file.signature  // Aquï¿½ guardas la firma en la columna signature
             };
 
             _dbContext.Files.Add(fileToSave);
@@ -107,7 +107,7 @@ public class FileController : Controller
 
 
 
-    // se utiliza para descargar el archivo, el hash y la llave pública del usuario
+    // se utiliza para descargar el archivo, el hash y la llave pï¿½blica del usuario
     [HttpGet("download/{fileId}")]
     public async Task<IActionResult> DownloadPackage(int fileId)
     {
@@ -134,12 +134,12 @@ public class FileController : Controller
             var signatureEntry = archive.CreateEntry("signature.txt");
             using (var writer = new StreamWriter(signatureEntry.Open()))
             {
-                string base64Signature = Convert.ToBase64String(file.signature ?? new byte[0]);
-                await writer.WriteAsync(base64Signature);
+                // string base64Signature = Convert.ToBase64String(file.signature);
+                await writer.WriteAsync(file.signature);
             }
 
 
-            // Llave pública real del usuario
+            // Llave pï¿½blica real del usuario
             var publicKeyEntry = archive.CreateEntry("publicKey.pem");
             using (var writer = new StreamWriter(publicKeyEntry.Open()))
             {

@@ -3,7 +3,7 @@
   import api from '../axios/index';
   import { useUser } from '../stores';
   import { useRouter } from 'vue-router';
-  import { generateRSAKeys, generateECCKeys, restoreKeysFromStorage } from '../utils';
+  import { generateRSAKeys, generateECCKeys } from '../utils';
 
   const router = useRouter();
   const user = useUser()
@@ -19,7 +19,7 @@
       console.log("Button pressed")
       console.log('Login data:', input.value);
 
-      const { publicKey, encryptKey } = await generateRSAKeys();
+      const { publicKey, encryptKey, keyType } = await generateRSAKeys();
       console.log('Public Key:', publicKey);
       console.log('Encrypt Key:', encryptKey);
 
@@ -28,7 +28,8 @@
         email: input.value.email,
         password: input.value.password,
         public_key: publicKey,
-        encrypt_key: encryptKey
+        encrypt_key: encryptKey,
+        key_type: keyType
       });
 
       console.log('Login response:', response.data);

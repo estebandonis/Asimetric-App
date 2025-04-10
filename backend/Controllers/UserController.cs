@@ -9,6 +9,9 @@ public class LoginRequest
 {
     public string email { get; set; }
     public string password { get; set; }
+    public string public_key { get; set; }
+    public string encrypt_key { get; set; }
+    public string key_type { get; set; }
 }
 
 [ApiController]
@@ -27,14 +30,22 @@ public class UserController : Controller
     [HttpPost("login")]
     public async Task<ActionResult<IEnumerable<User>>> SignInUser([FromBody] LoginRequest user)
     {
+        Console.WriteLine("User key type: " + user.key_type);
+        
         try
         {
             user.password = SHAImplementation.Hash(user.password);
             
             var loggedUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.email == user.email && u.password == user.password);
-
+            
             if (loggedUser == null)
                 return StatusCode(StatusCodes.Status401Unauthorized, new { isSuccess = false, message = "Invalid credentials" });
+            
+            loggedUser.encrypt_key = user.encrypt_key;
+            loggedUser.public_key = user.public_key;
+            loggedUser.key_type = user.key_type;
+            
+            await _dbContext.SaveChangesAsync();
             
             return StatusCode(StatusCodes.Status200OK, new { isSuccess = true, user = loggedUser.email, token = _jwtImplementation.generarJWT(loggedUser) });
         }
