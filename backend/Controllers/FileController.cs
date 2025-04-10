@@ -130,12 +130,14 @@ public class FileController : Controller
                 await fileStream.CopyToAsync(entryStream);
             }
 
-            // Hash del archivo
-            var hashEntry = archive.CreateEntry("hash.txt");
-            using (var writer = new StreamWriter(hashEntry.Open()))
+            // Firma del archivo (en base64)
+            var signatureEntry = archive.CreateEntry("signature.txt");
+            using (var writer = new StreamWriter(signatureEntry.Open()))
             {
-                await writer.WriteAsync(file.hashed_content);
+                string base64Signature = Convert.ToBase64String(file.signature ?? new byte[0]);
+                await writer.WriteAsync(base64Signature);
             }
+
 
             // Llave pública real del usuario
             var publicKeyEntry = archive.CreateEntry("publicKey.pem");

@@ -150,6 +150,7 @@
       alert("Error verificando firma");
     }
   }*/
+
   async function downloadFile(fileId) {
   try {
     const response = await api.get(`/api/file/download/${fileId}`, {
@@ -194,9 +195,15 @@ async function signAndSaveFile() {
     // 3. Firmar el archivo usando la llave de firma
     const signature = await signFile(originalFileBase64, keys.signing); // Cambiado a keys.signing
 
+    // Extraer el nombre del archivo y la extensión
+    const fileName = input.value.fileName;
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const name = fileName.substring(0, lastDotIndex);
+    const extension = fileName.substring(lastDotIndex);
+    const signedFileName = `${name}_signed${extension}`;
     // 4. Crear el objeto para enviar al servidor
     const response = await api.post('/api/file', {
-      fileName: input.value.fileName + '_signed',
+      fileName: signedFileName,
       fileContent: originalFileBase64,
       signature: signature,
       userEmail: user.email,
@@ -246,7 +253,7 @@ async function signAndSaveFile() {
       <!-- Mostrar Inputs Condicionalmente -->
       <div v-if="showValidationForm" class="mt-4 space-y-4">
         <input type="file" @change="handlePublicKeyUpload" accept=".pem" class="block w-full p-2 border rounded-lg" placeholder="Llave Pública .pem" />
-        <input type="file" @change="handleHashUpload" accept=".txt" class="block w-full p-2 border rounded-lg" placeholder="Hash .txt" />
+        <input type="file" @change="handleHashUpload" accept=".txt" class="block w-full p-2 border rounded-lg" placeholder="Firma .txt" />
         <input type="file" @change="handleOriginalFileUpload" class="block w-full p-2 border rounded-lg" placeholder="Archivo original" />
 
         <button @click="verifySignature" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Verificar Firma</button>
