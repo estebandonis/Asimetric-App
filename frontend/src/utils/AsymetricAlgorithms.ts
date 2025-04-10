@@ -44,7 +44,7 @@ export const generateRSAKeys = async() => {
     const exportedEncrypt = await window.crypto.subtle.exportKey("raw", encrypt);
     const exportedEncryptBase64 = btoa(ab2str(exportedEncrypt));
 
-    privateKey.setPrivateKeys(signingPrivateKey, signingPublicKey, encrypt, "RSA-PSS");
+    privateKey.setPrivateKeys(signingPrivateKey, encrypt, "RSA-PSS");
 
     return { 
       publicKey: exportedSigningPublicBase64,
@@ -85,7 +85,7 @@ export const generateECCKeys = async() => {
     const exportedEncrypt = await window.crypto.subtle.exportKey("raw", encrypt);
     const exportedEncryptBase64 = btoa(ab2str(exportedEncrypt));
 
-    privateKey.setPrivateKeys(signingPrivateKey, signingPublicKey, encrypt, "ECDSA");
+    privateKey.setPrivateKeys(signingPrivateKey, encrypt, "ECDSA");
 
     return {
       publicKey: exportedSigningPublicBase64, 
