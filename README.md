@@ -63,6 +63,42 @@ Pantalla de Home:
 * Vite.js para el frontend.
 * Un IDE para programar.
 
+
+## Tecnologías Utilizadas 🛠
+
+Frontend:
+* JavaScript
+* Tailwind CSS
+️* Vue.js
+* Vite.js
+* Axios
+* Web Crypto API
+
+Backend:
+* C#
+* ASP.NET 9
+* Entity Framework Core
+* System.Security.Cryptography
+
+
+## Conceptos
+
+* Token: Un token es un objeto que se utiliza para autenticar y autorizar a un usuario en una aplicación.
+* JWT: JSON Web Token, un estándar abierto (RFC 7519) que define un método compacto y autónomo para transmitir información de forma segura entre partes como un objeto JSON.
+
+* Hash: Función que toma una entrada y devuelve un valor fijo, utilizado para verificar la integridad de los datos.
+* SHA-256: Un algoritmo de hash criptográfico que produce un valor hash de 256 bits (32 bytes) a partir de una entrada de datos.
+
+* Algoritmos Simétricos: Algoritmos que utilizan la misma clave para cifrar y descifrar datos.
+* AES-CBC: Modo de operación de cifrado simétrico que utiliza el algoritmo AES (Advanced Encryption Standard) en modo CBC (Cipher Block Chaining); utiliza iv para la inicialización.
+
+* Algoritmos Asimétricos: Algoritmos que utilizan un par de claves (una pública y una privada) para cifrar y descifrar datos.
+* ECC: Criptografía de curva elíptica, un método de cifrado que utiliza propiedades matemáticas de las curvas elípticas para proporcionar seguridad.
+* RSA: Algoritmo de cifrado asimétrico que utiliza dos claves, una pública y una privada, para cifrar y descifrar datos.
+
+* Firma Digital: Proceso de cifrado de un mensaje o documento con la clave privada del remitente, que permite verificar su autenticidad y la integridad del contenido.
+
+
 ## Sugerencias 💡
 
 * Dividir el código en funciones para una mayor claridad y reutilización.
