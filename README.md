@@ -1,6 +1,6 @@
 # Laboratorio4 🛠️
 
-Este laboratorio se enfoca en la implementación y análisis de seguridad en el almacenamiento y autenticación de usuarios, firma digital de archivos y cifrado de datos. Se utilizarán técnicas como JWT, ECC/RSA, y SHA-256 para garantizar la seguridad de la información.
+Este laboratorio se enfoca en la implementación y análisis de seguridad en el almacenamiento y autenticación de usuarios, firma digital de archivos y cifrado de datos. Se utilizarán técnicas como JWT, ECC/RSA, AES-CBC, y SHA-256 para garantizar la seguridad de la información.
 
 # Competencias a Desarrollar 💡
 
@@ -53,13 +53,15 @@ Pantalla de Home:
 * Cada archivo tendrá un hash generado con SHA-256.
 * Al verificar un archivo, se compara su hash con el original.
 
+4️⃣ Comunicación cifrada de Archivos:
+* Los archivos se cifran con una llave simétrica (AES-CBC).
+
 ## Requisitos del lab
 
 * Máquina virtual Ubuntu o contenedor Docker con las dependencias necesarias instaladas.
-* Python 3.x instalado.
-* Librerías como PyJWT, cryptography y hashlib.
+* C# 8 o superior para el backend.
+* Vite.js para el frontend.
 * Un IDE para programar.
-
 
 ## Sugerencias 💡
 
@@ -68,6 +70,51 @@ Pantalla de Home:
 * Experimentar con diferentes parámetros y configuraciones para profundizar en la comprensión de los cifrados.
 
 # Cómo Ejecutar el Código ⏳
+
+Clonar el proyecto
+```bash
+git clone https://github.com/estebandonis/Asimetric-App.git
+```
+
+Frontend (Vue.js/JavaScript)
+
+Ingresar al directorio
+```bash
+cd Asimetric-App/Backend
+```
+
+Instalar dependencias
+```bash
+dotnet restore
+```
+
+Ejecutar el proyecto
+```bash
+dotnet run
+```
+
+Ejecutar el proyecto en modo desarrollo
+```bash
+dotnet run
+```
+
+
+Backend (ASP.NET/C#)
+
+Ingresar al directorio
+```bash
+cd Asimetric-App/Frontend
+```
+
+Instalar dependencias
+```bash
+npm install
+```
+
+Ejecutar el proyecto
+```bash
+npm run dev
+```
 
 # Equipo
 * Abner Iván García -21285
